@@ -8,3 +8,4 @@ class Elevator:
         self.open_time = open_time
         self.start_time = start_time
         self.stop_time = stop_time
+        self.queue = []

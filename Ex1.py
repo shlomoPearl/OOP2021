@@ -76,54 +76,92 @@ def write_to_csv(list_of_calls, file_name):
         csv_writer.writerows(csv_list_of_calls)
 
 
+def distance(queue, start_index, end_index):  # end_index > start_index
+    dist = 0
+    for i in range(start_index + 1, end_index + 1):
+        dist += abs(queue[i] - queue[i - 1])
+    return dist
+
+
 def stop_cycle_time(elevator):
     return elevator.stop_time + elevator.start_time + elevator.open_time + elevator.close_time
 
 
-def call_waiting_time(call: ElevatorCall, elevator: Elevator):
-    source_index = elevator.queue.index(call.source)
-    copy = elevator.queue[:source_index + 1]
-    number_of_stops = len(copy) - 1
-    distance = 0
-    for i in range(1, len(copy)):
-        distance += abs(copy[i] - copy[i - 1])
-    stop_time = stop_cycle_time(elevator)
-    time_to_source = (stop_time * number_of_stops) + (distance / elevator.speed)
-    return time_to_source - call.time_of_call
+# def call_waiting_time(call: ElevatorCall, elevator: Elevator):
+#     """
+#     this function assuumes the call argument is allocated to the elevator argument
+#     """
+#     source_index = elevator.queue.index(call.source)
+#     number_of_stops = source_index
+#     dist = distance(elevator.queue, 0, source_index)
+#     stop_time = stop_cycle_time(elevator)
+#     time_to_source = (stop_time * number_of_stops) + (dist / elevator.speed)
+#     return time_to_source - call.time_of_call
+#
+#
+# def call_travel_time(call: ElevatorCall, elevator: Elevator):
+#     """
+#     this function assuumes the call argument is allocated to the elevator argument
+#     """
+#     source_index = elevator.queue.index(call.source)
+#     destination_index = elevator.queue.index(call.destination)
+#     dist = distance(elevator.queue, source_index, destination_index)
+#     number_of_stops = destination_index - source_index
+#     stop_time = stop_cycle_time(elevator)
+#     return (stop_time * number_of_stops) + (dist / elevator.speed)
 
-def call_travel_time(call: ElevatorCall, elevator: Elevator):
-    source_index = elevator.queue.index(call.source)
-    destination_index = elevator.queue.index(call.destination)
-    for i in range(source_index, destination_index + 1):
 
-    distance = distance(source_index, destination_index)
-    number_of_stops = stop_count(source_index, destination_index)
-    return
+def total_work_time(queue, start, end, elevator: Elevator):
+    dist = distance(queue, start, end)
+    number_of_stops = end - start
+    return (number_of_stops * stop_cycle_time(elevator)) + (dist / elevator.speed)
 
+
+# def insert_call(queue, elevator: Elevator, call: ElevatorCall):
+#     work_time, i = 0, 1
+#     while (work_time < call.time_of_call) and (i < len(queue)):
+#         work_time += total_work_time(queue, i - 1, i, elevator)
+#         i += 1
+#     while
 
 def offline_algorithm(json_building_file_name, csv_input_file_name, csv_output_file_name):
     building = create_building_from_file(json_building_file_name)
     list_of_calls = create_list_of_call_from_csv(csv_input_file_name)
 
     for call in list_of_calls:
+
+        source = call.source
+        destination = call.destination
+        time_stamp = call.time_of_call
+
+        # verifying call validity:
         call_direction = ""
         if call.source < call.destination:
             call_direction = 'up'
         else:
             call_direction = 'down'
-
         invalid_down_call = ((call_direction == 'down') and
-                             ((call.destination < building.min_floor) or(call.source > building.max_floor)))
+                             ((destination < building.min_floor) or (source > building.max_floor)))
         invalid_up_call = ((call_direction == 'up') and
-                           ((call.destination > building.max_floor) or (call.source < building.min_floor)))
-
+                           ((destination > building.max_floor) or (source < building.min_floor)))
         if invalid_up_call or invalid_down_call:
             return
 
+        min_time_diff = float("inf")
+        result = 0
 
-    for call in list_of_calls:
-        call.allocated_to_elevator = randint(1, 5)
+        for elevator in building.elevators:
+            copy = elevator.queue[:]
+            current_time = total_work_time(copy, 0, len(copy) - 1, elevator)
+            copy += [source, destination]
+            new_time = total_work_time(copy, 0, len(copy) - 1, elevator)
+            time_diff = new_time - current_time
 
+            if time_diff < min_time_diff:
+                min_time_diff = time_diff
+                result = elevator.elevator_id
+
+        call.allocated_to_elevator = result
     write_to_csv(list_of_calls, csv_output_file_name)
 
 

@@ -147,7 +147,7 @@ def offline_algorithm(json_building_file_name, csv_input_file_name, csv_output_f
         if invalid_up_call or invalid_down_call:
             return
 
-        min_time_diff = float("inf")
+        min_time_diff = float('inf')
         result = 0
 
         for elevator in building.elevators:
@@ -160,6 +160,7 @@ def offline_algorithm(json_building_file_name, csv_input_file_name, csv_output_f
             if time_diff < min_time_diff:
                 min_time_diff = time_diff
                 result = elevator.elevator_id
+                elevator.queue += [source, destination]
 
         call.allocated_to_elevator = result
     write_to_csv(list_of_calls, csv_output_file_name)
@@ -167,7 +168,7 @@ def offline_algorithm(json_building_file_name, csv_input_file_name, csv_output_f
 
 def main():
     files = {"json_building_file_name": 0, "csv_input_file_name": 1, "csv_output_file_name": 2}
-    file_names = sys.argv[1:]
+    file_names = ["B1.json", 'Calls_a.csv', 'out.csv']
     offline_algorithm(file_names[files["json_building_file_name"]],
                       file_names[files["csv_input_file_name"]],
                       file_names[files["csv_output_file_name"]])
